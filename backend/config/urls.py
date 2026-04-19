@@ -19,7 +19,7 @@ from django.urls import path, include
 from django.http import HttpResponse 
 
 urlpatterns = [
-    path('', lambda request: HttpResponse("API funcionando")),  # ← AGREGAR
+    path('', lambda request: HttpResponse("API funcionando")), 
     path('admin/', admin.site.urls),
     path('api/', include('commissions.urls')),
 

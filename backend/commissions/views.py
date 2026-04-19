@@ -3,8 +3,7 @@ from rest_framework.response import Response
 from .models import Venta, Regla, Vendedor
 
 
-# Ventas (CRUD)
-
+# Crud 
 @api_view(['GET'])
 def listar_ventas(request):
     ventas = Venta.objects.all()
@@ -29,7 +28,7 @@ def crear_venta(request):
 
     venta = Venta.objects.create(
         vendedor_id=vendedor_id,
-        monto=monto,
+        monto=float(monto),
         fecha=fecha
     )
 
@@ -38,9 +37,12 @@ def crear_venta(request):
 
 @api_view(['DELETE'])
 def eliminar_venta(request, id):
-    venta = Venta.objects.get(id=id)
-    venta.delete()
-    return Response({"mensaje": "Venta eliminada"})
+    try:
+        venta = Venta.objects.get(id=id)
+        venta.delete()
+        return Response({"mensaje": "Venta eliminada"})
+    except Venta.DoesNotExist:
+        return Response({"error": "Venta no encontrada"}, status=404)
 
 
 # Vendedores
@@ -63,9 +65,11 @@ def listar_vendedores(request):
 
 def calcular_comision(monto):
     reglas = Regla.objects.all().order_by('-monto_minimo')
+
     for regla in reglas:
         if monto >= regla.monto_minimo:
             return monto * (regla.porcentaje / 100)
+
     return 0
 
 
@@ -73,6 +77,9 @@ def calcular_comision(monto):
 def calcular_comisiones(request):
     inicio = request.GET.get('inicio')
     fin = request.GET.get('fin')
+
+    if not inicio or not fin:
+        return Response({"error": "Fechas inválidas"}, status=400)
 
     ventas = Venta.objects.filter(fecha__range=[inicio, fin])
 
@@ -97,3 +104,24 @@ def calcular_comisiones(request):
         "resumen": resumen,
         "total_comisiones": total_global
     })
+
+
+# datos de prueba
+
+@api_view(['GET'])
+def seed_data(request):
+    if Vendedor.objects.exists() or Regla.objects.exists():
+        return Response({"mensaje": "Los datos ya existen"})
+
+    # Vendedores
+    Vendedor.objects.create(nombre="Juan")
+    Vendedor.objects.create(nombre="Maria")
+    Vendedor.objects.create(nombre="Carlos")
+    Vendedor.objects.create(nombre="Ana")
+
+    # Reglas de comisión
+    Regla.objects.create(monto_minimo=0, porcentaje=5)
+    Regla.objects.create(monto_minimo=500, porcentaje=10)
+    Regla.objects.create(monto_minimo=1000, porcentaje=15)
+
+    return Response({"mensaje": "Datos creados correctamente"})
