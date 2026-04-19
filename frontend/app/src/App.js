@@ -25,22 +25,36 @@ function App() {
     setVendedores(res.data);
   };
 
-  useEffect(() => {
+ useEffect(() => {
+  const inicializar = async () => {
+    try {
+      await api.get("seed/");
+    } catch (e) {
+      console.log("Seed ya ejecutado");
+    }
+
     cargarVentas();
     cargarVendedores();
-  }, []);
+  };
+
+  inicializar();
+}, []);
 
   // Crud
 
   const crearVenta = async () => {
-    await api.post("ventas/crear/", {
-      vendedor: vendedor,
-      monto: monto,
-      fecha: fecha
-    });
+  await api.post("ventas/crear/", {
+    vendedor: vendedor,
+    monto: monto,
+    fecha: fecha
+  });
 
-    cargarVentas();
-  };
+  setMonto("");
+  setFecha("");
+  setVendedor("");
+
+  cargarVentas();
+};
 
   const eliminarVenta = async (id) => {
     await api.delete(`ventas/eliminar/${id}/`);
@@ -71,7 +85,7 @@ function App() {
         onChange={e => setFecha(e.target.value)}
       />
 
-      <select onChange={e => setVendedor(e.target.value)}>
+      <select onChange={e => setVendedor(Number(e.target.value))}>
         <option value="">Seleccione vendedor</option>
         {vendedores.map(v => (
           <option key={v.id} value={v.id}>
